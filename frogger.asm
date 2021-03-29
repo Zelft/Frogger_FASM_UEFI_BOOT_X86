@@ -1,26 +1,30 @@
+;
+;*       Frogger UEFI application X86
+;*       Principios de Sistemas Oprativos - Ingenieria en Computacion
+;*       Danny Andres Piedra Acuna 
+;*       06/04/2021
+;*
+;*
+
 format pe64 dll efi
 entry main
 
 section '.text' code executable readable
 
-include 'efi.inc'
+; To use the uefi Input/Output functions
+include 'uefi.inc'
+
 
 main:
- sub rsp, 4*8              ; reserve space for 4 arguments
+ 	; Initialize UEFI library
+	InitializeLib
 
- mov [Handle], rcx         ; ImageHandle
- mov [SystemTable], rdx    ; pointer to SystemTable
-
- lea rdx, [_hello]
- mov rcx, [SystemTable]
- mov rcx, [rcx + EFI_SYSTEM_TABLE.ConOut]
- call [rcx + SIMPLE_TEXT_OUTPUT_INTERFACE.OutputString]
-
- add rsp, 4*8
- mov eax, EFI_SUCCESS
- retn
-
-
+	; Equivalent to SystemTable->ConOut->OutputString(SystemTable->ConOut, "Message")
+	uefi_call_wrapper ConOut, ClearScreen, ConOut, 1
+	uefi_call_wrapper ConOut, OutputString, ConOut, _hello
+	;uefi_call_wrapper ConOut, OutputString, ConOut, input_message
+ 
+ret
 section '.data' data readable writeable
 
 Handle      dq ?
