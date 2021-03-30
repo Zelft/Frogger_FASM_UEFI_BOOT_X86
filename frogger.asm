@@ -1,9 +1,7 @@
-;
-;*       Aplicacion Frogger UEFI  X86
-;*       Principios de Sistemas Operativos - Ingenieria en Computacion
-;*       Danny Andres Piedra Acuna 
-;*       06/04/2021
-;*
+; Frogger UEFI application made by Isaac Mena López
+; Principios de Sistemas Oprativos - TEC
+; 27-29/02/19
+
 format pe64 dll efi
 entry main
 
@@ -18,10 +16,12 @@ main:
 	InitializeLib
 
 	; Equivalent to SystemTable->ConOut->OutputString(SystemTable->ConOut, "Message")
+	uefi_call_wrapper ConOut, ClearScreen, ConOut, 1
 	uefi_call_wrapper ConOut, OutputString, ConOut, welcome_message
 	uefi_call_wrapper ConOut, OutputString, ConOut, input_message
 
 	jmp play
+
 
 play:
 
@@ -60,6 +60,7 @@ move_car:
 
 	retn
 
+	
 move_truck:
 	xor eax,eax
 
@@ -116,6 +117,33 @@ move_bus:
 	mov [bus_position],eax
 	retn
 
+move_second_bus:
+	xor eax,eax
+
+	; Store the current bus position
+	mov eax,[second_bus_position]
+
+	; Delete bus and add an empty cell
+	mov cl,byte[empty_cell]
+	mov byte[board+eax],cl
+
+	; Move the first "X" 3 positions to the right
+	; "xXX" -> "XX" -> "XXx"
+	add eax,6
+
+	call second_bus_reach_end
+	call check_bus_colission
+
+	; Draw the bus head "XXX"
+	mov cl,byte[vehicle]
+	mov byte[board+eax],cl
+
+	; Set the truck default position to the first 'X'
+	sub eax,4
+
+	; Update position
+	mov [second_bus_position],eax
+	retn
 ; This subroutine checks if the car has reached the left limit
 car_reach_end:
 	add eax,2
@@ -125,7 +153,6 @@ car_reach_end:
 	sub eax,2
 	retn
 
-; This subroutine checks if the car has reached the right limit
 truck_reach_end:
 	sub eax,2
 	cmp eax,[right_limit_row3]
@@ -143,6 +170,15 @@ bus_reach_end:
 	add eax,2
 	retn
 
+
+; This subroutine checks if the car has reached the right limit
+second_bus_reach_end:
+	sub eax,2
+	cmp eax,[right_limit_row2]
+	je restart_second_bus
+
+	add eax,2
+	retn
 ; This subroutine restart the car position to the first right position
 restart_car:
 	; Delete car position
@@ -224,7 +260,38 @@ restart_bus:
 
 	jmp play
 
-; This subroutine checks if the vehicle has colissioned the Frog
+; This subroutine restart the bus position to the first left position
+restart_second_bus:
+	; Delete the 3 bus 'XXX'
+	mov cl,byte[empty_cell]
+	mov byte[board+eax],cl
+
+	sub eax,2
+	mov byte[board+eax],cl
+
+	sub eax,2
+	mov byte[board+eax],cl
+
+	; Get the start position of the row
+	add eax,6
+	sub eax,[board_cols]
+
+	; Draw the 'XXX' at the begining of the row
+	xor ecx,ecx
+	mov cl,byte[vehicle]
+	mov byte[board+eax],cl
+	add eax,2
+	mov byte[board+eax],cl
+	add eax,2
+	mov byte[board+eax],cl
+
+	; Set the bus default position to the first 'X'
+	sub eax,4
+
+	; Update the bus position
+	mov [second_bus_position],eax
+
+	jmp play
 check_car_colission:
 
 	xor ecx,ecx
@@ -234,6 +301,9 @@ check_car_colission:
 	je game_over
 
 	retn
+
+; This subroutine checks if the vehicle has colissioned the Frog
+
 
 ; This subroutine checks if the vehicle has colissioned the Frog
 check_truck_colission:
@@ -259,8 +329,10 @@ check_bus_colission:
 
 move_vehicles:
 	call move_car
+	;call move_second_car
 	call move_truck
 	call move_bus
+	call move_second_bus
 	retn
 
 show_board:
@@ -480,7 +552,6 @@ left_limit_reached:
 	cmp eax,[left_limit_row2]
 	je restart_frog_to_right
 
-
 	; Restablish again frog position
 	sub eax,2
 
@@ -519,7 +590,7 @@ finish:
 
 section '.data' data readable writeable
 
-	; Game Logic Data
+	; Game Logic Data 
 	right_limit_row1	dd		68
 	right_limit_row2	dd		142
 	right_limit_row3	dd		214
@@ -536,9 +607,9 @@ section '.data' data readable writeable
 
 	frog_position		dd		398
 	bus_position		dd		80
-	truck_position	dd			182
+	second_bus_position		dd	124	
+	truck_position	dd		182
 	car_position		dd		242
-
 	first_whole_fifth_row		dd		304
 	second_whole_fifth_row		dd		318
 	third_whole_fifth_row		dd		332
@@ -553,12 +624,13 @@ section '.data' data readable writeable
 								 				13,10,'===========#======================',\
 												13,10,'======0======0======0======0======',\
 								 				13,10,'=================*================',13,10,0
+
 	frog						du		'*'
  	empty_cell			du		'='
 	;whole  				du 		'0'
 	vehicle					du		'#'
 	INPUT_KEY				EFI_INPUT_KEY
-
+	MinCod   EQU 4Bh
 	; Output Messages
 	input_message 	du 	'Para jugar utilice las teclas: ',13,10,'W -> Avanzar',13,10,\
 							'A -> Izquierda',13,10,\
@@ -577,4 +649,5 @@ section '.data' data readable writeable
 												'Tarea Corta #2 ',13,10,\
 												'Danny Andres Piedra Acuna ',13,10,\
 												'Principios de Sistemas Operativos',13,10,10,0
+
 section '.reloc' fixups data discardable
