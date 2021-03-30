@@ -1,7 +1,10 @@
-; Frogger UEFI application made by Isaac Mena López
-; Principios de Sistemas Oprativos - TEC
-; 27-29/02/19
-
+;
+;*       Aplicacion Frogger UEFI  X86
+;*       Principios de Sistemas Operativos - Ingenieria en Computacion
+;*       Danny Andres Piedra Acuna 
+;*       06/04/2021 
+;*
+;*
 format pe64 dll efi
 entry main
 
