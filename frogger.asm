@@ -411,12 +411,14 @@ check_game_over:
 	; Check next position
 	cmp byte[board+eax], 'X'
 	je game_over
+	cmp byte[board+eax], '0'
+	je game_over
 	retn
 
 ; Check if the frog is in the 5th row (where starts)
 check_first_row:
 	add eax,72
-	cmp eax, [right_limit_row5]
+	cmp eax, [right_limit_row6]
 	jg play
 
 	sub eax,72
@@ -430,6 +432,8 @@ check_win_game:
 ; Check if frog_position has reached a left limit
 right_limit_reached:
 	sub eax,2
+	cmp eax,[right_limit_row6]
+	je restart_frog_to_left
 	cmp eax,[right_limit_row5]
 	je restart_frog_to_left
 	cmp eax,[right_limit_row4]
@@ -465,6 +469,8 @@ restart_frog_to_left:
 left_limit_reached:
 	; Because must check the left limit position
 	add eax,2
+	cmp eax,[left_limit_row6]
+	je restart_frog_to_right
 	cmp eax,[left_limit_row5]
 	je restart_frog_to_right
 	cmp eax,[left_limit_row4]
@@ -473,6 +479,7 @@ left_limit_reached:
 	je restart_frog_to_right
 	cmp eax,[left_limit_row2]
 	je restart_frog_to_right
+
 
 	; Restablish again frog position
 	sub eax,2
@@ -518,32 +525,40 @@ section '.data' data readable writeable
 	right_limit_row3	dd		214
 	right_limit_row4	dd		286
 	right_limit_row5	dd		358
+	right_limit_row6	dd		430
 
 	left_limit_row1	dd		8
 	left_limit_row2	dd		76
 	left_limit_row3	dd		148
 	left_limit_row4	dd		220
 	left_limit_row5	dd		292
+	left_limit_row6	dd		364
 
-	frog_position		dd		326
+	frog_position		dd		398
 	bus_position		dd		80
-	truck_position	dd		182
+	truck_position	dd			182
 	car_position		dd		242
-	board_rows			dd		5
+
+	first_whole_fifth_row		dd		304
+	second_whole_fifth_row		dd		318
+	third_whole_fifth_row		dd		332
+	fourth_whole_fifth_row		dd		346
+	board_rows			dd		6
 	board_cols			dd		68
-	len_board				dd		360
+	len_board				dd		432
 
-	board						du		13,10,'..................................',\
-												13,10,'...XXX............................',\
-												13,10,'...................XX.............',\
-								 				13,10,'...........X......................',\
-								 				13,10,'.................R................',13,10,0
-
-	frog						du		'R'
- 	empty_cell			du		'.'
-	vehicle					du		'X'
+	board						du				13,10,'==================================',\
+												13,10,'===###===================###======',\
+												13,10,'===================##=============',\
+								 				13,10,'===========#======================',\
+												13,10,'======0======0======0======0======',\
+								 				13,10,'=================*================',13,10,0
+	frog						du		'*'
+ 	empty_cell			du		'='
+	;whole  				du 		'0'
+	vehicle					du		'#'
 	INPUT_KEY				EFI_INPUT_KEY
-	
+
 	; Output Messages
 	input_message 	du 	'Para jugar utilice las teclas: ',13,10,'W -> Avanzar',13,10,\
 							'A -> Izquierda',13,10,\
