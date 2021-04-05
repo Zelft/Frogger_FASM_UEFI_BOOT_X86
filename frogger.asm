@@ -33,7 +33,7 @@ play:
 	uefi_call_wrapper ConIn, Reset, ConIn, 0
 
 	call move_vehicles
-	call show_board
+	call show_board  
 	call get_user_input
 	call identify_key
 	jmp play
